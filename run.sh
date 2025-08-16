@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 JOB="${1:-job1}"                          # 引数で job 名を受け取る。未指定なら job1
 
+# 必須環境変数チェック
 : "${DB_NAME:?DB_NAME is required}"
 : "${DB_USER:?DB_USER is required}"
 : "${DB_PASSWORD:?DB_PASSWORD is required}"
@@ -33,5 +34,7 @@ trap 'rm -f "$TMP_SQL"' EXIT
   echo "COMMIT;"
 } > "$TMP_SQL"
 
+# psql で実行
 psql "$DB_URI" -v ON_ERROR_STOP=1 -f "$TMP_SQL"
+
 echo "[${JOB}] done."
