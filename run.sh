@@ -3,14 +3,16 @@ set -Eeuo pipefail
 
 JOB="${1:-job1}"                          # 引数で job 名を受け取る。未指定なら job1
 
-# DB接続情報を環境変数から組み立てる
-DB_HOST="127.0.0.1"
-DB_PORT="5432"
-DB_NAME="${DB_NAME:?DB_NAME is required}"
-DB_USER="${DB_USER:?DB_USER is required}"
-DB_PASS="${DB_PASSWORD:?DB_PASSWORD is required}"
+: "${DB_NAME:?DB_NAME is required}"
+: "${DB_USER:?DB_USER is required}"
+: "${DB_PASSWORD:?DB_PASSWORD is required}"
+: "${CLOUDSQL_CONNECTION_NAME:?CLOUDSQL_CONNECTION_NAME is required}"
 
-DB_URI="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+# Cloud SQL Auth Proxy 経由の接続用 URI を組み立てる
+DB_URI="postgresql://${DB_USER}:${DB_PASSWORD}@/${DB_NAME}?host=/cloudsql/${CLOUDSQL_CONNECTION_NAME}"
+
+echo "=== Starting job ${JOB} with DB_URI ==="
+echo "${DB_URI}"
 
 SQL_DIR="/workspace/jobs/${JOB}/sql"
 if [ ! -d "$SQL_DIR" ]; then
