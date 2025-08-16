@@ -2,7 +2,15 @@
 set -Eeuo pipefail
 
 JOB="${1:-job1}"                          # 引数で job 名を受け取る。未指定なら job1
-: "${DB_URI:?DB_URI is required}"         # 例: postgresql://user:pass@host:5432/db
+
+# DB接続情報を環境変数から組み立てる
+DB_HOST="127.0.0.1"
+DB_PORT="5432"
+DB_NAME="${DB_NAME:?DB_NAME is required}"
+DB_USER="${DB_USER:?DB_USER is required}"
+DB_PASS="${DB_PASSWORD:?DB_PASSWORD is required}"
+
+DB_URI="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
 SQL_DIR="/workspace/jobs/${JOB}/sql"
 if [ ! -d "$SQL_DIR" ]; then
@@ -10,14 +18,12 @@ if [ ! -d "$SQL_DIR" ]; then
   exit 2
 fi
 
-# BEGIN; ... (全*.sqlを順番に) ... COMMIT; を一時ファイルに束ねて1トランザクションで実行
+# BEGIN; ... COMMIT; でラップして1トランザクションで実行
 TMP_SQL="$(mktemp)"
 trap 'rm -f "$TMP_SQL"' EXIT
 
 {
   echo "BEGIN;"
-  # 数字順に並べて結合（純SQLのみ）
-  # shellcheck disable=SC2045
   for f in $(ls -1 "$SQL_DIR"/*.sql | sort); do
     cat "$f"
     echo
