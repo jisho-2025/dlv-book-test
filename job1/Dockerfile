@@ -1,13 +1,15 @@
-FROM gcr.io/cloudsql-docker/gce-proxy:1.33.7 as cloud_sql_proxy
+# gsutil が入っている Google 提供イメージ
+FROM google/cloud-sdk:slim
 
-FROM postgres:15
+# PostgreSQL クライアントを追加
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y curl gnupg lsb-release \
-    && apt-get install -y google-cloud-sdk \
-    && rm -rf /var/lib/apt/lists/*
-
+# 作業ディレクトリ
 WORKDIR /app
+
+# シェルスクリプトと SQL をコピー
 COPY run_job1.sh /app/
 COPY sql /app/sql
 
+# デフォルト実行コマンド
 ENTRYPOINT ["bash", "/app/run_job1.sh"]
